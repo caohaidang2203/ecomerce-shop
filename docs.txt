@@ -1,0 +1,11 @@
+PS D:\web-developer\e-shop\frontend> npx create-react-app .
+PS D:\web-developer\e-shop> npm init
+PS D:\web-developer\e-shop> npm i nodemon mongoose dotenv bcrypt jsonwebtoken nodemailer cookie-parser
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init
+PS D:\web-developer\e-shop> npm i express
+PS D:\web-developer\e-shop\frontend> npm i react-router-dom react-icons country-state-city 
+PS D:\web-developer\e-shop\frontend> npm install --legacy-peer-deps react-lottie
+PS D:\web-developer\e-shop> npm i express-fileupload 
+npm i nodemailer
+PS D:\web-developer\e-shop\frontend> npm i redux redux-thunk react-redux redux-toolkit
