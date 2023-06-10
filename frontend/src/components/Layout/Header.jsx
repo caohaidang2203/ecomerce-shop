@@ -12,8 +12,11 @@ import { BiMenuAltLeft } from "react-icons/bi";
 import { CgProfile } from "react-icons/cg";
 import DropDown from "./DropDown.jsx";
 import Navbar from "./Navbar.jsx";
+import { useSelector } from "react-redux";
+import { backend_url } from "../../server";
 
 const Header = ({ activeHeading }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchData, setSearchData] = useState(null);
   const [active, setActive] = useState(false);
@@ -33,7 +36,7 @@ const Header = ({ activeHeading }) => {
   };
 
   window.addEventListener("scroll", () => {
-    if (window.screenY > 70) {
+    if (window.scrollY > 70) {
       setActive(true);
     } else {
       setActive(false);
@@ -51,8 +54,8 @@ const Header = ({ activeHeading }) => {
                 alt=""
               />
             </Link>
-            {/* search box */}
           </div>
+          {/* search box */}
           <div className="w-[30%] relative">
             <input
               type="text"
@@ -108,7 +111,7 @@ const Header = ({ activeHeading }) => {
           className={`${styles.section} relative ${styles.noramlFlex} justify-between`}
         >
           {/* category */}
-          <div>
+          <div onClick={() => setDropDown(!dropDown)}>
             <div className="relative h-[53px] mt-[10px] w-[270px] hidden 1000px:block">
               <BiMenuAltLeft size={20} className="absolute top-3 left-2 mt-2" />
               <button
@@ -155,9 +158,19 @@ const Header = ({ activeHeading }) => {
             </div>
             <div className={`${styles.noramlFlex}`}>
               <div className="relative cursor-pointer mr-[15px]">
-                <Link to="/login">
-                  <CgProfile size={27} />
-                </Link>
+                {isAuthenticated ? (
+                  <Link to="/profile">
+                    <img
+                      src={`${backend_url}${user.avatar}`}
+                      className="w-[35px] h-[35px] rounded-full"
+                      alt=""
+                    />
+                  </Link>
+                ) : (
+                  <Link to="/login">
+                    <CgProfile size={27} />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
