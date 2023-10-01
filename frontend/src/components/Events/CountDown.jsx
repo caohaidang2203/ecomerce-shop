@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 // import axios from "axios";
 // import { server } from "../../server";
 
-const CountDown = () => {
+const CountDown = ({ data }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const CountDown = () => {
   });
 
   function calculateTimeLeft() {
-    const difference = +new Date("2023-06-14") - +new Date();
+    const difference = +new Date(data.Finish_Date) - +new Date();
     let timeLeft = {};
     if (difference > 0) {
       timeLeft = {

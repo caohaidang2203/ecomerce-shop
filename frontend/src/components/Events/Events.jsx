@@ -1,19 +1,26 @@
-import React from "react";
-// import { productData } from "../../static/data";
+import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
 import styles from "../../styles/styles";
-// import ProductCard from "../Route/ProductCard/ProductCard";
 import EventCard from "./EventCard.jsx";
 const Events = () => {
+  const { event, isLoading } = useSelector((state) => state.event);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div>
-      <div className={`${styles.section}`}>
-        <div className={`${styles.heading}`}>
-          <h1>Popular Events</h1>
+      {!isLoading && (
+        <div className={`${styles.section}`}>
+          <div className={`${styles.heading}`}>
+            <h1>Popular Events</h1>
+          </div>
+
+          <div className="w-full grid">
+            {event.length !== 0 && <EventCard data={event && event[0]} />}
+            <h4>{event?.length === 0 && "No Events have!"}</h4>
+          </div>
         </div>
-        <div className="w-full grid">
-          <EventCard />
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import styles from "../../styles/styles";
 import {
   AiFillHeart,
@@ -9,12 +10,35 @@ import {
 } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import { backend_url, server } from "../../server";
+import { getAllProductsShop } from "../../redux/actions/product";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "../../redux/actions/wishlist";
+import { addTocart } from "../../redux/actions/cart";
+import { toast } from "react-toastify";
+import Ratings from "./Ratings";
+import axios from "axios";
 
 const ProductDetails = ({ data }) => {
+  const { wishlist } = useSelector((state) => state.wishlist);
+  const { cart } = useSelector((state) => state.cart);
+  const { product } = useSelector((state) => state.product);
+  const { user, isAuthenticated } = useSelector((state) => state.user);
   const [count, setCount] = useState(1);
   const [click, setClick] = useState(false);
   const [select, setSelect] = useState(0);
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getAllProductsShop(data && data?.shop._id));
+    if (wishlist && wishlist.find((i) => i._id === data?._id)) {
+      setClick(true);
+    } else {
+      setClick(false);
+    }
+  }, [data, wishlist]);
 
   const incrementCount = () => {
     setCount(count + 1);
@@ -28,18 +52,65 @@ const ProductDetails = ({ data }) => {
 
   const removeFromWishlistHandler = (data) => {
     setClick(!click);
-    // dispatch(removeFromWishlist(data));
+    dispatch(removeFromWishlist(data));
   };
 
   const addToWishlistHandler = (data) => {
     setClick(!click);
-    // dispatch(addToWishlist(data));
+    dispatch(addToWishlist(data));
   };
 
-  const handleMessageSubmit = (data) => {
-    navigate("/inbox?conversation=12fnsjdvbifbvb");
+  const addToCartHandler = (id) => {
+    const isItemExists = cart && cart.find((i) => i._id === id);
+    if (isItemExists) {
+      toast.error("Item already in cart!");
+    } else {
+      if (data.stock < count) {
+        toast.error("Product stock limited!");
+      } else {
+        const cartData = { ...data, qty: count };
+        dispatch(addTocart(cartData));
+        toast.success("Item added to cart successfully!");
+      }
+    }
   };
 
+  const handleMessageSubmit = async () => {
+    if (isAuthenticated) {
+      const groupTitle = data._id + user._id;
+      const userId = user._id;
+      const shopId = data.shop._id;
+      await axios
+        .post(`${server}/conversation/create-new-conversation`, {
+          groupTitle,
+          userId,
+          shopId,
+        })
+        .then((res) => {
+          navigate(`/inbox?${res.data.conversation._id}`);
+        })
+        .catch((error) => {
+          toast.error(error.response.data.message);
+        });
+    } else {
+      toast.error("Please login to create a conversation");
+    }
+  };
+
+  const totalReviewsLength =
+    product &&
+    product.reduce((acc, product) => acc + product.reviews.length, 0);
+
+  const totalRatings =
+    product &&
+    product.reduce(
+      (acc, product) =>
+        acc + product.reviews.reduce((sum, review) => sum + review.rating, 0),
+      0
+    );
+
+  const averageRating =
+    Math.round((totalRatings * 10) / totalReviewsLength) / 10 || 0;
   return (
     <div className="bg-white">
       {data ? (
@@ -48,35 +119,31 @@ const ProductDetails = ({ data }) => {
             <div className="block w-full 800px:flex">
               <div className="w-full 800px:w-[50%]">
                 <img
-                  src={data.image_Url[select].url}
+                  src={`${backend_url}${data && data.images[select]}`}
                   alt=""
                   className="w-[80%]"
                 />
                 <div className="w-full flex">
+                  {data &&
+                    data.images.map((i, index) => (
+                      <div
+                        className={`${
+                          select === 0 ? "border" : "null"
+                        } cursor-pointer`}
+                      >
+                        <img
+                          src={`${backend_url}${i}`}
+                          alt=""
+                          className="h-[200px] overflow-hidden mr-3 mt-3"
+                          onClick={() => setSelect(index)}
+                        />
+                      </div>
+                    ))}
                   <div
                     className={`${
-                      select === 0 ? "border" : "null"
+                      select === 1 ? "border border-[#dc143c]" : "null"
                     } cursor-pointer`}
-                  >
-                    <img
-                      src={data?.image_Url[0].url}
-                      alt=""
-                      className="h-[200px]"
-                      onClick={() => setSelect(0)}
-                    />
-                  </div>
-                  <div
-                    className={`${
-                      select === 1 ? "border" : "null"
-                    } cursor-pointer`}
-                  >
-                    <img
-                      src={data?.image_Url[1].url}
-                      alt=""
-                      className="h-[200px]"
-                      onClick={() => setSelect(1)}
-                    />
-                  </div>
+                  ></div>
                 </div>
               </div>
 
@@ -85,16 +152,16 @@ const ProductDetails = ({ data }) => {
                 <p>{data.description}</p>
                 <div className="flex pt-3">
                   <h4 className={`${styles.productDiscountPrice}`}>
-                    {data.discount_price}$
+                    {data.discountPrice}$
                   </h4>
                   <h3 className={`${styles.price}`}>
-                    {data.price ? data.price + "$" : null}
+                    {data.originalPrice ? data.originalPrice + "$" : null}
                   </h3>
                 </div>
                 <div className="flex items-center mt-12 justify-between pr-3">
                   <div>
                     <button
-                      className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
+                      className=" bg-[#3957db] text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
                       onClick={decrementCount}
                     >
                       -
@@ -103,7 +170,7 @@ const ProductDetails = ({ data }) => {
                       {count}
                     </span>
                     <button
-                      className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
+                      className=" bg-[#3957db] text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out"
                       onClick={incrementCount}
                     >
                       +
@@ -132,28 +199,28 @@ const ProductDetails = ({ data }) => {
 
                 <div
                   className={`${styles.button} !mt-6 !rounded !h-11 flex items-center hover:bg-[#3957db]`}
-                  onClick={() => {}}
+                  onClick={() => addToCartHandler(data._id)}
                 >
                   <span className="text-white flex items-center">
                     Add to cart <AiOutlineShoppingCart className="ml-1" />
                   </span>
                 </div>
                 <div className="flex items-center pt-8">
-                  <Link to={`/shop/preview/${data.shop.name}`}>
+                  <Link to={`/shop/preview/${data?.shop._id}`}>
                     <img
-                      src={data.shop.shop_avatar.url}
+                      src={`${backend_url}${data?.shop?.avatar}`}
                       alt=""
                       className="w-[50px] h-[50px] rounded-full mr-2"
                     />
                   </Link>
                   <div className="pr-8">
-                    <Link to={`/shop/preview/${data.shop.name}`}>
+                    <Link to={`/shop/preview/${data?.shop._id}`}>
                       <h3 className={`${styles.shop_name} pb-1 pt-1`}>
                         {data.shop.name}
                       </h3>
                     </Link>
                     <h5 className="pb-3 text-[15px]">
-                      ({data.shop.ratings}) Ratings
+                      ({averageRating}/5) Ratings
                     </h5>
                   </div>
                   <div
@@ -168,7 +235,12 @@ const ProductDetails = ({ data }) => {
               </div>
             </div>
           </div>
-          <ProductDetailsInfo data={data} />
+          <ProductDetailsInfo
+            data={data}
+            product={product}
+            totalReviewsLength={totalReviewsLength}
+            averageRating={averageRating}
+          />
           <br />
           <br />
         </div>
@@ -177,7 +249,12 @@ const ProductDetails = ({ data }) => {
   );
 };
 
-const ProductDetailsInfo = ({ data }) => {
+const ProductDetailsInfo = ({
+  data,
+  product,
+  totalReviewsLength,
+  averageRating,
+}) => {
   const [active, setActive] = useState(1);
   return (
     <div className="bg-[#f5f6fb] px-3 800px:px-10 py-2 rounded">
@@ -215,7 +292,7 @@ const ProductDetailsInfo = ({ data }) => {
             }
             onClick={() => setActive(3)}
           >
-            Seller Information
+            Shop Information
           </h5>
           {active === 3 ? (
             <div className={`${styles.active_indicator}`} />
@@ -230,53 +307,72 @@ const ProductDetailsInfo = ({ data }) => {
         </>
       ) : null}
       {active === 2 ? (
-        <>
-          <p className="w-full min-h-[40vh] flex flex-col items-center py-3 ">
-            No reviews yet!
-          </p>
-        </>
+        <div className="w-full min-h-[40vh] flex flex-col items-center py-3 overflow-y-scroll">
+          {data &&
+            data.reviews.map((item, index) => (
+              <div className="w-full flex my-2">
+                <img
+                  src={`${backend_url}/${item.user.avatar}`}
+                  alt=""
+                  className="w-[50px] h-[50px] rounded-full"
+                />
+                <div className="pl-2 ">
+                  <div className="w-full flex items-center">
+                    <h1 className="font-[500] mr-3">{item.user.name}</h1>
+                    <Ratings rating={data?.ratings} />
+                  </div>
+                  <p>{item.comment}</p>
+                </div>
+              </div>
+            ))}
+
+          <div className="w-full flex justify-center">
+            {data && data.reviews.length === 0 && (
+              <h5>No Reviews have for this product!</h5>
+            )}
+          </div>
+        </div>
       ) : null}
       {active === 3 && (
         <div className="w-full block 800px:flex p-5">
           <div className="w-full 800px:w-[50%]">
-            <Link to={`/shop/preview/${data.shop.name}`}>
+            <Link to={`/shop/preview/${data.shop._id}`}>
               <div className="flex items-center">
                 <img
-                  src={data.shop.shop_avatar.url}
+                  src={`${backend_url}${data?.shop?.avatar}`}
                   className="w-[50px] h-[50px] rounded-full"
                   alt=""
                 />
                 <div className="pl-3">
                   <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
                   <h5 className="pb-2 text-[15px]">
-                    ({data.shop.ratings}) Ratings
+                    {" "}
+                    ({averageRating}/5) Ratings
                   </h5>
                 </div>
               </div>
             </Link>
-            <p className="pt-2">
-              Fashion4Freedom (F4F - Fashion for freedom) has been very vocal
-              about its desire to use fashion to liberate and develop. In 2010,
-              upon realizing that economic development had been draining the
-              livelihood of craft villages, Nguyen Lan Vy founded F4F to
-              directly link customers with artisans, minimizing the number of
-              intermediaries and labor exploitation.
-            </p>
+            <p className="pt-2">{data.shop.description}</p>
           </div>
           <div className="w-full 800px:w-[50%] mt-5 800px:mt-0 800px:flex flex-col items-end">
             <div className="text-left">
               <h5 className="font-[600]">
-                Joined on: <span className="font-[500]">14 June, 2023</span>
+                Joined on:{" "}
+                <span className="font-[500]">
+                  {data.shop?.createdAt?.slice(0, 10)}
+                </span>
               </h5>
               <h5 className="font-[600] pt-3">
-                Total Products: <span className="font-[500]">1000</span>
+                Total Products:{" "}
+                <span className="font-[500]">{product && product.length}</span>
               </h5>
               <h5 className="font-[600] pt-3">
-                Total Reviews: <span className="font-[500]">100</span>
+                Total Reviews:{" "}
+                <span className="font-[500]">{totalReviewsLength}</span>
               </h5>
               <Link to="/">
                 <div
-                  className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3 hover:bg-[#3957db]`}
+                  className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}
                 >
                   <h4 className="text-white">Visit Shop</h4>
                 </div>

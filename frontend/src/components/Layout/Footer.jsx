@@ -11,13 +11,14 @@ import {
   footerProductLinks,
   footerSupportLinks,
 } from "../../static/data";
+import brand from "../../images/brandImg.png";
 
 const Footer = () => {
   return (
-    <div className="bg-[#000] text-white">
-      <div className="md:flex md:justify-between md:items-center sm:px-12 px-4 bg-[#63c6f7] py-7">
-        <h1 className="lg:text-4xl text-3xl md:mb-0 mb-6 lg:leading-normal font-semibold md:w-2/5 text-black">
-          <span>Get 20% Off Discount Coupon</span> <br />
+    <div className="bg-[#fff] text-black">
+      <div className="md:flex md:justify-between md:items-center sm:px-12 px-4 bg-sky-500 py-7">
+        <h1 className="lg:text-4xl text-3xl md:mb-0 mb-6 lg:leading-normal font-semibold md:w-2/5 text-white">
+          <span>Get 10% Off Discount Coupon</span> <br />
           by Subscribe Us
         </h1>
         <div>
@@ -26,7 +27,7 @@ const Footer = () => {
             required
             placeholder="Email address"
             className="text-gray-800
-                sm:w-72 w-full sm:mr-5 mr-1 lg:mb-0 mb-4 py-2.5 rounded px-2 focus:outline-none"
+                sm:w-72 w-full sm:mr-5 mr-1 lg:mb-0 mb-4 py-2.5 rounded px-2 focus:outline-1"
           />
           <button className="bg-[#FFBB38] hover:bg-[#f1a517] duration-300 px-5 py-2.5 rounded-md text-black md:w-auto w-full">
             Submit
@@ -36,11 +37,15 @@ const Footer = () => {
       <div className="grid grid-cols-1 sm:gird-cols-3 lg:grid-cols-4 gap-6 sm:px-8 px-5 py-16 sm:text-center">
         <ul className="px-5 text-center sm:text-start flex sm:block flex-col items-center">
           <img
-            src="https://eep.io/mc-cdn-images/template_images/branding_logo_text_dark.svg"
+            src={brand}
             alt=""
-            style={{ filter: "brightness(0) invert(1)" }}
+            style={{
+              width: "130px",
+              objectFit: "contain",
+              marginLeft: "20px",
+              userSelect: "none",
+            }}
           />
-          <br />
           <p>The home and elements needeed to create beatiful products.</p>
           <div className="flex items-center mt-[15px]">
             <AiFillFacebook
@@ -70,7 +75,7 @@ const Footer = () => {
           {footerProductLinks.map((link, index) => (
             <li key={index}>
               <Link
-                className="text-gray-400 hover:text-white duration-300
+                className="text-gray-500 hover:text-black duration-300
                    text-sm cursor-pointer leading-6"
                 to={link.link}
               >
@@ -85,7 +90,7 @@ const Footer = () => {
           {footercompanyLinks.map((link, index) => (
             <li key={index}>
               <Link
-                className="text-gray-400 hover:text-white duration-300
+                className="text-gray-500 hover:text-black duration-300
                    text-sm cursor-pointer leading-6"
                 to={link.link}
               >
@@ -100,7 +105,7 @@ const Footer = () => {
           {footerSupportLinks.map((link, index) => (
             <li key={index}>
               <Link
-                className="text-gray-400 hover:text-white duration-300
+                className="text-gray-500 hover:text-black duration-300
                    text-sm cursor-pointer leading-6"
                 to={link.link}
               >
@@ -115,7 +120,7 @@ const Footer = () => {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10
          text-center pt-2 text-gray-400 text-sm pb-8"
       >
-        <span>© 2020 Becodemy. All rights reserved.</span>
+        <span>© 2023 17D Shop. All rights reserved.</span>
         <span>Terms · Privacy Policy</span>
         <div className="sm:block flex items-center justify-center w-full">
           <img
