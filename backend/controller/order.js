@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const { isAuthenticated, isShop } = require("../middleware/auth");
+const { isAuthenticated, isShop, isAdmin } = require("../middleware/auth");
 const Order = require("../model/order");
 const Product = require("../model/product");
-
+const Shop = require("../model/shop");
 // create new order
 router.post(
   "/create-order",
@@ -110,6 +110,8 @@ router.put(
       if (req.body.status === "Delivered") {
         order.deliveredAt = Date.now();
         order.paymentInfo.status = "Succeeded";
+        const serviceCharge = order.totalPrice * 0.1;
+        await updateShopInfo(order.totalPrice - serviceCharge);
       }
 
       await order.save({ validateBeforeSave: false });
@@ -121,11 +123,17 @@ router.put(
 
       async function updateOrder(id, qty) {
         const product = await Product.findById(id);
-
         product.stock -= qty;
         product.sold_out += qty;
 
         await product.save({ validateBeforeSave: false });
+      }
+      async function updateShopInfo(amount) {
+        const shop = await Shop.findById(req.shop.id);
+
+        shop.availableBalance = amount;
+
+        await shop.save();
       }
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
@@ -194,6 +202,27 @@ router.put(
 
         await product.save({ validateBeforeSave: false });
       }
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// all orders --- for admin
+router.get(
+  "/admin-all-orders",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const orders = await Order.find().sort({
+        deliveredAt: -1,
+        createdAt: -1,
+      });
+      res.status(201).json({
+        success: true,
+        orders,
+      });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }

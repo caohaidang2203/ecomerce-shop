@@ -118,8 +118,8 @@ const Header = ({ activeHeading }) => {
                             alt=""
                             className="w-[40px] h-[40px] mr-[10px]"
                           />
+                          <h1>{i.name}</h1>
                         </div>
-                        <h1>{i.name}</h1>
                       </Link>
                     );
                   })}

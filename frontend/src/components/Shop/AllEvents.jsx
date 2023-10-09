@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteEvent, getAllEventsShop } from "../../redux/actions/event";
 import { Button, Table } from "antd";
-// import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AiOutlineDelete, AiOutlineEye } from "react-icons/ai";
 import Loader from "../Layout/Loader";
 const AllEvents = () => {
@@ -49,14 +49,11 @@ const AllEvents = () => {
       key: "preview",
       render: (_, record) => (
         <>
-          {/* <Link to={`/product/${record.id}`}>
+          <Link to={`/product/${record.id}?isEvent=true`}>
             <Button>
               <AiOutlineEye size={20} />
             </Button>
-          </Link> */}
-          <Button>
-            <AiOutlineEye size={20} />
-          </Button>
+          </Link>
         </>
       ),
     },

@@ -5,7 +5,7 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
 const Shop = require("../model/shop");
-const { isAuthenticated, isShop } = require("../middleware/auth");
+const { isAuthenticated, isShop, isAdmin } = require("../middleware/auth");
 const { upload } = require("../multer");
 const catchAsyncError = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/ErrorHandler");
@@ -245,6 +245,102 @@ router.put(
       shop.address = address;
       shop.phoneNumber = phoneNumber;
       shop.zipCode = zipCode;
+
+      await shop.save();
+
+      res.status(201).json({
+        success: true,
+        shop,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// all shop --- for admin
+router.get(
+  "/admin-all-shops",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncError(async (req, res, next) => {
+    try {
+      const shop = await Shop.find().sort({
+        createdAt: -1,
+      });
+      // console.log(shop);
+      res.status(201).json({
+        success: true,
+        shop,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// delete shop ---admin
+router.delete(
+  "/delete-shop/:id",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncError(async (req, res, next) => {
+    try {
+      const shop = await Shop.findById(req.params.id);
+
+      if (!shop) {
+        return next(
+          new ErrorHandler("Shop is not available with this id", 400)
+        );
+      }
+
+      await Shop.findByIdAndDelete(req.params.id);
+
+      res.status(201).json({
+        success: true,
+        message: "Shop deleted successfully!",
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// update shop withdraw methods --- shop
+router.put(
+  "/update-payment-methods",
+  isShop,
+  catchAsyncError(async (req, res, next) => {
+    try {
+      const { withdrawMethod } = req.body;
+
+      const shop = await Shop.findByIdAndUpdate(req.shop._id, {
+        withdrawMethod,
+      });
+
+      res.status(201).json({
+        success: true,
+        shop,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// delete shop withdraw merthods --- only shop
+router.delete(
+  "/delete-withdraw-method/",
+  isShop,
+  catchAsyncError(async (req, res, next) => {
+    try {
+      const shop = await Shop.findById(req.shop._id);
+
+      if (!shop) {
+        return next(new ErrorHandler("Shop not found with this id", 400));
+      }
+
+      shop.withdrawMethod = null;
 
       await shop.save();
 

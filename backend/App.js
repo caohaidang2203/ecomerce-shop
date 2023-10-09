@@ -33,6 +33,7 @@ const Payment = require("./controller/payment");
 const Order = require("./controller/order");
 const Message = require("./controller/message");
 const Conversation = require("./controller/conversation");
+const Withdraw = require("./controller/withdraw");
 
 app.use("/api/v2/user", User);
 app.use("/api/v2/shop", Shop);
@@ -43,6 +44,7 @@ app.use("/api/v2/payment", Payment);
 app.use("/api/v2/order", Order);
 app.use("/api/v2/message", Message);
 app.use("/api/v2/conversation", Conversation);
+app.use("/api/v2/withdraw", Withdraw);
 
 //It's for ErrorHandling
 app.use(ErrorHandler);

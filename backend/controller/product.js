@@ -5,7 +5,7 @@ const Shop = require("../model/shop");
 const { upload } = require("../multer");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/ErrorHandler");
-const { isShop, isAuthenticated } = require("../middleware/auth");
+const { isShop, isAuthenticated, isAdmin } = require("../middleware/auth");
 const Order = require("../model/order");
 
 // create product
@@ -28,15 +28,12 @@ router.post(
         //   images = req.body.images;
         // }
         const files = req.files;
-        // console.log(files);
         const imageUrls = files.map((file) => `${file.filename}`);
-        // console.log(imageUrls);
         const productData = req.body;
         productData.images = imageUrls;
         productData.shop = shop;
 
         const product = await Product.create(productData);
-        // console.log(product);
         res.status(201).json({
           success: true,
           product,
@@ -58,7 +55,6 @@ router.get(
         success: true,
         product,
       });
-      // console.log(products);
     } catch (error) {
       return next(new ErrorHandler(error, 400));
     }
@@ -111,6 +107,43 @@ router.get(
       res.status(201).json({
         success: true,
         product,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error, 400));
+    }
+  })
+);
+
+// delete product -- admin
+router.delete(
+  "/delete-product/:id",
+  isAuthenticated,
+  isAdmin("Admin"),
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const productId = req.params.id;
+
+      // const productData = await Product.findById(productId);
+
+      // productData.images.forEach((imageUrl) => {
+      //   const filename = imageUrl;
+      //   const filePath = `uploads/${filename}`;
+
+      //   fs.unlink(filePath, (err) => {
+      //     if (err) {
+      //       console.log(err);
+      //     }
+      //   });
+      // });
+
+      const product = await Product.findByIdAndDelete(productId);
+      if (!product) {
+        return next(new ErrorHandler("Product is not found with this id", 404));
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Product deleted successfully",
       });
     } catch (error) {
       return next(new ErrorHandler(error, 400));
@@ -174,5 +207,26 @@ router.put(
     }
   })
 );
+
+// // all products --- for admin
+// router.get(
+//   "/admin-all-products",
+//   isAuthenticated,
+//   isAdmin("Admin"),
+//   catchAsyncErrors(async (req, res, next) => {
+//     try {
+//       const product = await Product.find().sort({
+//         createdAt: -1,
+//       });
+//       // console.log(product);
+//       res.status(201).json({
+//         success: true,
+//         product,
+//       });
+//     } catch (error) {
+//       return next(new ErrorHandler(error.message, 500));
+//     }
+//   })
+// );
 
 module.exports = router;

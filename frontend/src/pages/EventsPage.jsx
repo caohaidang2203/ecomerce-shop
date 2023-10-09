@@ -14,7 +14,18 @@ const EventsPage = () => {
       ) : (
         <div>
           <Header activeHeading={4} />
-          <EventCard active={true} data={event && event[0]} />
+          {/* <EventCard active={true} data={event && event[0]} />
+          <EventCard active={true} data={event && event[1]} /> */}
+          {event.length === 1 && (
+            <EventCard active={true} data={event && event[0]} />
+          )}
+          {event.length >= 2 && (
+            <EventCard active={true} data={event && event[0]} />
+          )}
+          {event.length >= 2 && (
+            <EventCard active={true} data={event && event[1]} />
+          )}
+          <h4>{event?.length === 0 && "No Events have!"}</h4>
           <Footer />
         </div>
       )}

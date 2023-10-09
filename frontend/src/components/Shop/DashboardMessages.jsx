@@ -24,7 +24,7 @@ const DashboardMessages = () => {
   const [activeStatus, setActiveStatus] = useState(false);
   const [open, setOpen] = useState(false);
   const scrollRef = useRef(null);
-
+  const [images, setImages] = useState();
   useEffect(() => {
     socketId.on("getMessage", (data) => {
       setArrivalMessage({
@@ -147,6 +147,57 @@ const DashboardMessages = () => {
       });
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    setImages(file);
+    imageSendingHandler(file);
+  };
+
+  const imageSendingHandler = async (e) => {
+    const formData = new FormData();
+
+    formData.append("images", e);
+    formData.append("sender", shop._id);
+    formData.append("text", newMessage);
+    formData.append("conversationId", currentChat._id);
+
+    const receiverId = currentChat.members.find(
+      (member) => member !== shop._id
+    );
+
+    socketId.emit("sendMessage", {
+      senderId: shop._id,
+      receiverId,
+      images: e,
+    });
+
+    try {
+      await axios
+        .post(`${server}/message/create-new-message`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res) => {
+          setImages();
+          setMessages([...messages, res.data.message]);
+          updateLastMessageForImage();
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateLastMessageForImage = async () => {
+    await axios.put(
+      `${server}/conversation/update-last-message/${currentChat._id}`,
+      {
+        lastMessage: "Photo",
+        lastMessageId: shop._id,
+      }
+    );
+  };
+
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ beahaviour: "smooth" });
   }, [messages]);
@@ -189,6 +240,7 @@ const DashboardMessages = () => {
           activeStatus={activeStatus}
           scrollRef={scrollRef}
           setMessages={setMessages}
+          handleImageUpload={handleImageUpload}
         />
       )}
     </div>
@@ -215,7 +267,7 @@ const MessageList = ({
 
   useEffect(() => {
     const userId = data.members.find((user) => user != me);
-
+    console.log(userId);
     const getUser = async () => {
       try {
         const res = await axios.get(`${server}/user/user-info/${userId}`);
@@ -253,13 +305,17 @@ const MessageList = ({
         )}
       </div>
       <div className="pl-3">
-        <h1 className="text-[18px]">{user.name}</h1>
-        <p className="text-[16px] text-[#000c]">
-          {data?.lastMessageId !== user?._id
-            ? "You:"
-            : user.name.split(" ")[0] + ": "}{" "}
-          {data?.lastMessage}
-        </p>
+        {user?.name && (
+          <>
+            <h1 className="text-[18px]">{user?.name}</h1>
+            <p className="text-[16px] text-[#000c]">
+              {data?.lastMessageId !== user?._id
+                ? "You:"
+                : user?.name.split(" ")[0] + ": "}{" "}
+              {data?.lastMessage}
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -275,6 +331,7 @@ const ShopInbox = ({
   shopId,
   userData,
   activeStatus,
+  handleImageUpload,
 }) => {
   return (
     <div className="w-full min-h-full flex flex-col justify-between">
@@ -299,10 +356,11 @@ const ShopInbox = ({
       </div>
 
       {/* messages */}
-      <div className="px-3 h-[65vh] py-3 overflow-y-scroll">
-        {messages &&
-          messages.map((item, index) => (
-            <div
+      {/* <div className="px-3 h-[65vh] py-3 overflow-y-scroll">
+      {messages &&
+        messages.map((item, index) => {
+             return (
+              <div
               className={`flex w-full my-2 ${
                 item.sender === shopId ? "justify-end" : "justify-start"
               }`}
@@ -315,7 +373,17 @@ const ShopInbox = ({
                   alt=""
                 />
               )}
-              <div>
+               {
+                item.images && (
+                  <img
+                     src={`${backend_url}${item.images}`}
+                     className="w-[300px] h-[300px] object-cover rounded-[10px] mr-2"
+                  />
+                )
+              }
+             {
+              item.text !== "" && (
+                <div>
                 <div
                   className={`w-max p-2 rounded ${
                     item.sender === shopId ? "bg-[#000]" : "bg-[#38c776]"
@@ -327,11 +395,54 @@ const ShopInbox = ({
                 <p className="text-[12px] text-[#000000d3] pt-1">
                   {format(item.createdAt)}
                 </p>
-              </div>
-            </div>
+              </div> )
+             }
+            </div>)
           ))}
-      </div>
+      </div> */}
+      {/* messages */}
+      <div className="px-3 h-[65vh] py-3 overflow-y-scroll">
+        {messages &&
+          messages.map((item, index) => {
+            return (
+              <div
+                className={`flex w-full my-2 ${
+                  item.sender === shopId ? "justify-end" : "justify-start"
+                }`}
+                ref={scrollRef}
+              >
+                {item.sender !== shopId && (
+                  <img
+                    src={`${backend_url}${userData?.avatar}`}
+                    className="w-[40px] h-[40px] rounded-full mr-3"
+                    alt=""
+                  />
+                )}
 
+                {item.images.length !== 0 && (
+                  <img
+                    src={`${backend_url}${item.images}`}
+                    className="w-[300px] h-[300px] object-cover rounded-[10px] mr-2"
+                  />
+                )}
+                {item.text !== "" && (
+                  <div>
+                    <div
+                      className={`w-max p-2 rounded ${
+                        item.sender === shopId ? "bg-[#000]" : "bg-[#38c776]"
+                      } text-[#fff] h-min`}
+                    >
+                      <p>{item.text}</p>
+                    </div>
+                    <p className="text-[12px] text-[#000000d3] pt-1">
+                      {format(item.createdAt)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </div>
       {/* send message input */}
       <form
         aria-required={true}
@@ -339,7 +450,16 @@ const ShopInbox = ({
         onSubmit={sendMessageHandler}
       >
         <div className="w-[30px]">
-          <TfiGallery className="cursor-pointer" size={20} />
+          <input
+            type="file"
+            name=""
+            id="image"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+          <label htmlFor="image">
+            <TfiGallery className="cursor-pointer" size={20} />
+          </label>
         </div>
         <div className="w-full">
           <input
